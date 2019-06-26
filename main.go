@@ -5,6 +5,7 @@ import (
 	"flag"
 	"go/parser"
 	"go/token"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -13,8 +14,8 @@ import (
 
 func main() {
 	flag.Parse()
-	if len(flag.Args()) != 2 {
-		log.Fatal("Please supply a path to search and an output file")
+	if len(flag.Args()) < 1 {
+		log.Fatal("Please supply a path to search")
 		os.Exit(1)
 	}
 
@@ -41,15 +42,19 @@ func main() {
 		os.Exit(2)
 	}
 
-	outputPath := flag.Arg(1)
-	f, err := os.OpenFile(outputPath, os.O_RDWR|os.O_CREATE, 0755)
+	var f io.Writer
+	if outputPath := flag.Arg(1); outputPath != "" {
+		f, err = os.OpenFile(outputPath, os.O_RDWR|os.O_CREATE, 0755)
+	} else {
+		f = os.Stdout
+	}
+
 	enc := json.NewEncoder(f)
 	err = enc.Encode(importMap)
 	if err != nil {
 		log.Fatal("Problem encoding", err)
 		os.Exit(3)
 	}
-
 }
 
 func getImports(path string) ([]string, error) {
