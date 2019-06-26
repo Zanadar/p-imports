@@ -60,12 +60,19 @@ var testPaths = []struct {
 	expected []string
 }{
 	{
-		path:     filepath.Join(testData, "simple_imports"),
-		expected: []string{"empty.go", "os_fmt.go"},
+		path: filepath.Join(testData, "simple_imports"),
+		expected: []string{
+			filepath.Join(testData, "simple_imports", "empty.go"),
+			filepath.Join(testData, "simple_imports", "os_fmt.go"),
+		},
 	},
 	{
-		path:     filepath.Join(testData, "go-loud"),
-		expected: []string{"loudbot.go", "cmd/savelouds/savelouds.go", "cmd/seedlouds/seedlouds.go"},
+		path: filepath.Join(testData, "go-loud"),
+		expected: []string{
+			filepath.Join(testData, "go-loud", "loudbot.go"),
+			filepath.Join(testData, "go-loud", "cmd", "savelouds", "savelouds.go"),
+			filepath.Join(testData, "go-loud", "cmd", "seedlouds", "seedlouds.go"),
+		},
 	},
 }
 
