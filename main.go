@@ -20,22 +20,18 @@ func main() {
 	}
 
 	importMap := make(map[string][]string)
-	err := filepath.Walk(flag.Arg(0),
-		func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
+	goFiles, err := GetGoFiles(flag.Arg(0))
+	if err != nil {
+		os.Exit(15)
+	}
 
-			if strings.HasSuffix(path, ".go") {
-				imports, err := getImports(path)
-				if err != nil {
-					return err
-				}
-				importMap[path] = imports
-			}
-
-			return nil
-		})
+	for _, f := range goFiles {
+		imports, err := GetImports(f)
+		if err != nil {
+			os.Exit(17)
+		}
+		importMap[f] = imports
+	}
 
 	if err != nil {
 		log.Fatal("Problem searching for .go files", err)
@@ -57,7 +53,7 @@ func main() {
 	}
 }
 
-func getImports(path string) ([]string, error) {
+func GetImports(path string) ([]string, error) {
 	fset := token.NewFileSet()
 
 	f, err := parser.ParseFile(fset, path, nil, parser.ImportsOnly)
@@ -71,4 +67,26 @@ func getImports(path string) ([]string, error) {
 	}
 
 	return imports, nil
+}
+
+func GetGoFiles(path string) ([]string, error) {
+	var goFiles []string
+	err := filepath.Walk(path,
+		func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+
+			if strings.HasSuffix(path, ".go") {
+				goFiles = append(goFiles, path)
+			}
+
+			return nil
+		})
+
+	if err != nil {
+		return []string{}, err
+	}
+
+	return goFiles, nil
 }
