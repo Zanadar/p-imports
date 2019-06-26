@@ -1,33 +1,69 @@
 package main
 
 import (
-	"fmt"
+	"encoding/json"
+	"flag"
+	"go/parser"
+	"go/token"
 	"log"
 	"os"
+	"path/filepath"
+	"strings"
 )
 
 func main() {
-	if len(os.Args) != 2 {
-		log.Fatal("Please supply a path to search")
+	flag.Parse()
+	if len(flag.Args()) != 2 {
+		log.Fatal("Please supply a path to search and an output file")
 		os.Exit(1)
 	}
-	target := os.Args[1]
-	imports, err := Imports{path: target}.scan()
+
+	importMap := make(map[string][]string)
+	err := filepath.Walk(flag.Arg(0),
+		func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+
+			if strings.HasSuffix(path, ".go") {
+				imports, err := getImports(path)
+				if err != nil {
+					return err
+				}
+				importMap[path] = imports
+			}
+
+			return nil
+		})
 
 	if err != nil {
-		log.Fatal("Something went wrong", err)
+		log.Fatal("Problem searching for .go files", err)
 		os.Exit(2)
 	}
 
+	outputPath := flag.Arg(1)
+	f, err := os.OpenFile(outputPath, os.O_RDWR|os.O_CREATE, 0755)
+	enc := json.NewEncoder(f)
+	err = enc.Encode(importMap)
+	if err != nil {
+		log.Fatal("Problem encoding", err)
+		os.Exit(3)
+	}
 
-	fmt.Println("Imports:", imports)
 }
 
-type Imports struct {
-	path string
-}
+func getImports(path string) ([]string, error) {
+	fset := token.NewFileSet()
 
-func(i Imports) scan() ([]string, error) {
-	return []string{}, nil
+	f, err := parser.ParseFile(fset, path, nil, parser.ImportsOnly)
+	if err != nil {
+		return []string{}, err
+	}
+
+	imports := []string{}
+	for _, i := range f.Imports {
+		imports = append(imports, strings.Trim(i.Path.Value, `"`))
+	}
+
+	return imports, nil
 }
-ad
