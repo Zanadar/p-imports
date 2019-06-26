@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"fmt"
 	"go/parser"
 	"go/token"
 	"io"
@@ -15,7 +16,7 @@ import (
 func main() {
 	flag.Parse()
 	if len(flag.Args()) < 1 {
-		log.Fatal("Please supply a path to search")
+		fmt.Fprint(os.Stderr, "USAGE: p-imports <PATH> [OUTPUT.JSON]")
 		os.Exit(1)
 	}
 
